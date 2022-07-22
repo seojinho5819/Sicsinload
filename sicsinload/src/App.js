@@ -6,6 +6,9 @@ import './App.css';
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
   const { naver } = window;
+  const HOME_PATH = window.HOME_PATH || '.';
+  
+
 
   useEffect(()=>{
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
@@ -26,7 +29,8 @@ function App() {
     map,
     position: mylocation,
     icon: {
-      src: './genderqueer-genderless-person.png',
+      url : './img/mylocationicon18.jpg',
+      //content: '<img src="'+ HOME_PATH +'/img/mylocationicon18.jpg" alt="noContent" >',
       size: new naver.maps.Size(50, 52),
       anchor: new naver.maps.Point(25, 26)
     }
