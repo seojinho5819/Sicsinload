@@ -28,12 +28,13 @@ function App() {
   const marker = new naver.maps.Marker({
     map,
     position: mylocation,
-    icon: {
-      url : './img/mylocationicon18.jpg',
-      //content: '<img src="'+ HOME_PATH +'/img/mylocationicon18.jpg" alt="noContent" >',
-      size: new naver.maps.Size(50, 52),
-      anchor: new naver.maps.Point(25, 26)
-    }
+    // icon: {
+    //   url : './img/mylocationicon18.jpg',
+    //   //content: '<img src="'+ HOME_PATH +'/img/mylocationicon18.jpg" alt="noContent" >',
+    //   size: new naver.maps.Size(50, 52),
+    //   anchor: new naver.maps.Point(25, 26)
+    // }
+    icon :'./img/mylocationicon18.jpg',
   });
   // 지도에 마커(내위치) 생성
   let circle = new naver.maps.Circle({
