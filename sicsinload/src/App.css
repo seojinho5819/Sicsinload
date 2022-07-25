@@ -7,6 +7,12 @@
   pointer-events: none;
 }
 
+#map {
+  width: 500px;
+  height: 500px;
+  margin: 100px 100px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-float infinite 3s ease-in-out;

@@ -1,8 +1,7 @@
-import React,{ useEffect, useState } from 'react';
-//import logo from './logo.svg';
-//import { Counter } from './features/counter/Counter';
+import { useEffect, useState } from 'react';
 import './App.css';
 import logo from './asset/mylocationicon18.jpg'
+
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
@@ -11,7 +10,7 @@ function App() {
   
 
 
-  useEffect(()=>{
+  useEffect(async()=>{
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
   // 지도에 표시할 위치의 위도와 경도 설정
 
@@ -24,6 +23,21 @@ function App() {
   const map = naver && new naver.maps.Map('map', mapOptions);
 
   
+  await fetch('/v1/search/local.json?query=%EC%A3%BC%EB%B3%80%EC%9D%8C%EC%8B%9D%EC%A0%90&display=5',{
+    method: 'GET', // *GET, POST, PUT, DELETE 등
+    // mode: 'cors', // no-cors, *cors, same-origin
+    // cache: 'no-cache', // *default, no-cache, reload, force-cache, 
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Naver-Client-Id' : 'DJGnZ7vQFrDYjIvc57PY',
+      'X-Naver-Client-Secret' : 'FQXmywEPSO'
+    },
+  }) .then((res) => {
+    return res.json(); //Promise 반환
+  })
+  .then((json) => {
+      console.log(json); // 서버에서 주는 json데이터가 출력 됨
+  });
 
   // DOM 요소에 지도 삽입 (지도를 삽입할 HTML 요소의 id, 지도의 옵션 객체)
   let marker = new naver.maps.Marker({
@@ -69,55 +83,6 @@ function App() {
     
     </div>
   );
-  // return (
-  //   <div className="App">
-  //     <header className="App-header">
-  //       <img src={logo} className="App-logo" alt="logo" />
-  //       <Counter />
-  //       <p>
-  //         Edit <code>src/App.js</code> and save to reload.
-  //       </p>
-  //       <span>
-  //         <span>Learn </span>
-  //         <a
-  //           className="App-link"
-  //           href="https://reactjs.org/"
-  //           target="_blank"
-  //           rel="noopener noreferrer"
-  //         >
-  //           React
-  //         </a>
-  //         <span>, </span>
-  //         <a
-  //           className="App-link"
-  //           href="https://redux.js.org/"
-  //           target="_blank"
-  //           rel="noopener noreferrer"
-  //         >
-  //           Redux
-  //         </a>
-  //         <span>, </span>
-  //         <a
-  //           className="App-link"
-  //           href="https://redux-toolkit.js.org/"
-  //           target="_blank"
-  //           rel="noopener noreferrer"
-  //         >
-  //           Redux Toolkit
-  //         </a>
-  //         ,<span> and </span>
-  //         <a
-  //           className="App-link"
-  //           href="https://react-redux.js.org/"
-  //           target="_blank"
-  //           rel="noopener noreferrer"
-  //         >
-  //           React Redux
-  //         </a>
-  //       </span>
-  //     </header>
-  //   </div>
-  // );
 }
 
 export default App;
