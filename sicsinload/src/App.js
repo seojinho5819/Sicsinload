@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import logo from './asset/mylocationicon18.jpg'
+
 
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
   const { naver } = window;
-
+  const HOME_PATH = window.HOME_PATH || '.';
   
 
 
@@ -25,16 +25,17 @@ function App() {
   
 
   // DOM 요소에 지도 삽입 (지도를 삽입할 HTML 요소의 id, 지도의 옵션 객체)
-  let marker = new naver.maps.Marker({
+  const marker = new naver.maps.Marker({
     map,
     position: mylocation,
-    icon: {
-      url : logo,
-      scaledSize: new naver.maps.Size(50, 68),
-      anchor: naver.maps.Point(23, 40)
-    }
+    // icon: {
+    //   url : './img/mylocationicon18.jpg',
+    //   //content: '<img src="'+ HOME_PATH +'/img/mylocationicon18.jpg" alt="noContent" >',
+    //   size: new naver.maps.Size(50, 52),
+    //   anchor: new naver.maps.Point(25, 26)
+    // }
+    icon :'./img/mylocationicon18.jpg',
   });
- 
   // 지도에 마커(내위치) 생성
   let circle = new naver.maps.Circle({
     map: map,
