@@ -1,16 +1,48 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import logo from './asset/mylocationicon18.jpg'
+import Input from './component/inputForm/Input';
 
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
   const { naver } = window;
 
-  
+  const getFetch = async() =>{
+    var myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    myHeaders.append("X-Naver-Client-Id", "DJGnZ7vQFrDYjIvc57PY");
+    myHeaders.append("X-Naver-Client-Secret", "FQXmywEPSO");
+    var requestOptions = {
+      method: 'GET',
+      mode: 'cors', 
+      headers: myHeaders,
+      redirect: 'follow'
+    };
+    
+    await fetch("https://openapi.naver.com/v1/search/local.json?query=주변음식&display=5", requestOptions)
+      .then(response => response.text())
+      .then(result => console.log(result))
+      .catch(error => console.log('error', error));
+  //   await fetch('https://openapi.naver.com/v1/search/local.json?query=주변음식점display=5',{
+  //   method: 'GET', // *GET, POST, PUT, DELETE 등
+  //   mode: 'cors', // no-cors, *cors, same-origin
+  //   // cache: 'no-cache', // *default, no-cache, reload, force-cache, 
+  //   headers: {
+  //     'Content-Type' : "application/json",
+  //     'X-Naver-Client-Id' : "DJGnZ7vQFrDYjIvc57PY",
+  //     'X-Naver-Client-Secret' : "FQXmywEPSO"
+  //   }
+  // }).then(response => {
+  //   return response.json();
+  // })
+  // .then(data => {
+  //   console.log(data);
+  // });
+  }
 
 
-  useEffect(async()=>{
+  useEffect(()=>{
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
   // 지도에 표시할 위치의 위도와 경도 설정
 
@@ -21,23 +53,11 @@ function App() {
   // 확대 단계
   };
   const map = naver && new naver.maps.Map('map', mapOptions);
-
+  getFetch()
   
-  await fetch('/v1/search/local.json?query=%EC%A3%BC%EB%B3%80%EC%9D%8C%EC%8B%9D%EC%A0%90&display=5',{
-    method: 'GET', // *GET, POST, PUT, DELETE 등
-    // mode: 'cors', // no-cors, *cors, same-origin
-    // cache: 'no-cache', // *default, no-cache, reload, force-cache, 
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Naver-Client-Id' : 'DJGnZ7vQFrDYjIvc57PY',
-      'X-Naver-Client-Secret' : 'FQXmywEPSO'
-    },
-  }) .then((res) => {
-    return res.json(); //Promise 반환
-  })
-  .then((json) => {
-      console.log(json); // 서버에서 주는 json데이터가 출력 됨
-  });
+  
+    
+
 
   // DOM 요소에 지도 삽입 (지도를 삽입할 HTML 요소의 id, 지도의 옵션 객체)
   let marker = new naver.maps.Marker({
@@ -78,9 +98,16 @@ function App() {
 
   return (
     <div className="App">
-      
+      <div className='Wrapper'>
         <div id="map"/>
-    
+        <div>
+          <Input
+            type={'number'}
+            colLabel={false}
+            label={'라'}
+          />
+        </div>
+      </div>
     </div>
   );
 }
