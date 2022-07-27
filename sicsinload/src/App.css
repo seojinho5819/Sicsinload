@@ -7,14 +7,11 @@
   pointer-events: none;
 }
 
-.Wrapper {
-  
-}
 
 #map {
-  width: 500px;
-  height: 500px;
-  margin: 100px 100px;
+  width: 100%;
+  height: 600px;
+  
 }
 
 @media (prefers-reduced-motion: no-preference) {
