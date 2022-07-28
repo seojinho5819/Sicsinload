@@ -10,29 +10,63 @@ import RightShiftModal from './component/js/inputForm/RightShiftModal';
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
-  const { naver } = window;
+  const [ store , setStore ] = useState([])
+  const { naver,kakao } = window;
+  
 
-  const getAxios = async() =>{
+
+  // getAxios()
+  // const getAxios = async() =>{
+  //   var config = {
+  //     method: 'get',
+  //     url: '/v1/search/local.json?query=내근처음식점&display=5&start=100',
+  //     headers: { 
+  //       'Content-Type': 'application/json', 
+  //       'X-Naver-Client-Id': 'DJGnZ7vQFrDYjIvc57PY', 
+  //       'X-Naver-Client-Secret': 'FQXmywEPSO'
+  //     }
+  //   };
+    
+  //   axios(config)
+  //   .then(function (response) {
+  //     console.log(response.data.items);
+  //   })
+  //   .catch(function (error) {
+  //     console.log(error);
+  //   });
+    
+
+  // }
+  //"proxy": "https://openapi.naver.com",
+  const getAxios = async(max,min,map) =>{
     var config = {
       method: 'get',
-      url: '/v1/search/local.json?query=주변일식당&display=5',
+      url: 'https://map.naver.com/v5/api/search?caller=pcweb&query=%EB%82%B4%EC%A3%BC%EB%B3%80%EC%9D%8C%EC%8B%9D%EC%A0%90&type=place&searchCoord='+mylocation.lng+';'+mylocation.lat+'&page=1&displayCount=20&boundary='+min.x+';'+min.y+';'+max.x+';'+max.y+'&lang=ko',
       headers: { 
         'Content-Type': 'application/json', 
-        'X-Naver-Client-Id': 'DJGnZ7vQFrDYjIvc57PY', 
-        'X-Naver-Client-Secret': 'FQXmywEPSO'
+        
       }
     };
     
-    axios(config)
+    await axios(config)
     .then(function (response) {
-      console.log(response.data.items);
+      console.log(response)
+      response.data.result.place.list.map((item) => {
+        let marker = new naver.maps.Marker({
+          position: new naver.maps.LatLng(item.y, item.x),
+          map: map
+        })
+        marker.setMap(map)
+        return ;
+      })
     })
     .catch(function (error) {
       console.log(error);
     });
     
-
+    
   }
+
 
 
   useEffect(()=>{
@@ -57,13 +91,40 @@ function App() {
     customControl.setMap(map);
     naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function() {
       map.setCenter(new naver.maps.LatLng(mylocation.lat, mylocation.lng));
+    });
   });
-});
+  console.log('bounds : ',map.getBounds())
 
-  getAxios()
-  
-  
+ 
+  const findNearstore = (lat,lng) => {
+    let stores = []
+    if(store.length>0){
+      stores = store
+      stores.setMap(null)
+      setStore([])
+    }
+    let places = new kakao.maps.services.Places();
+    let callback = function(result, status) {
+      if (status === kakao.maps.services.Status.OK) {
+          result.map(res => {
+            let marker = new naver.maps.Marker({
+              position: new naver.maps.LatLng(res.y, res.x),
+              map: map
+            })
+            stores.push(marker)
+            setStore(stores)
+          }
+          )
+      }
+    };
+
+    places.keywordSearch('내주변 음식점', callback,{ location: new kakao.maps.LatLng(lat, lng),radius:500});
     
+  }
+
+  //findNearstore(mylocation.lat, mylocation.lng)
+  
+  getAxios(map.getBounds()._max,map.getBounds()._min,map)
 
 
   // DOM 요소에 지도 삽입 (지도를 삽입할 HTML 요소의 id, 지도의 옵션 객체)
@@ -78,24 +139,30 @@ function App() {
   });
  
   // 지도에 마커(내위치) 생성
-  let circle = new naver.maps.Circle({
-    map: map,
-    center: mylocation,
-    radius: 500,
-    fillOpacity: 0.8
-});
+//   let circle = new naver.maps.Circle({
+//     map: map,
+//     center: mylocation,
+//     radius: 500,
+//     fillOpacity: 0.8
+// });
   // 마커(나) 이동
-  naver.maps.Event.addListener(map, 'click', function(e) {
+  naver.maps.Event.addListener(map, 'click',  async function(e) {
+    let stores = []
     setMyLocation(e.latlng.y,e.latlng.x)
     marker.setPosition(e.coord);
-    circle.setCenter({y:e.latlng.y,x: e.latlng.x})
-
+    //circle.setCenter({y:e.latlng.y,x: e.latlng.x})
+    //findNearstore(e.latlng.y,e.latlng.x)
     //const mapLatLng = new naver.maps.LatLng(e.coord);
+    
+     await getAxios(map.getBounds()._max,map.getBounds()._min,map)
+   
+    
+    //setStore(stores)
 
     // 선택한 마커로 부드럽게 이동합니다.
     map.setZoom(15)
     map.panTo(e.coord, {duration:300 ,easing:'linear'});
-  
+    console.log('bounds : ',map.getBounds())
     });
      // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
