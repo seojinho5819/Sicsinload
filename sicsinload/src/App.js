@@ -11,7 +11,7 @@ import RightShiftModal from './component/js/inputForm/RightShiftModal';
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
   const [ aroundStore , setAroundStore ] = useState([])
-  const [ markers , setMakers ] = useState([])
+  const [ markers , setMarkers ] = useState([])
   const { naver } = window;
   
 
@@ -110,6 +110,7 @@ function App() {
       anchor: naver.maps.Point(60, 80)
     }
   });
+  let makersArray = []
   naver.maps.Event.once(map, 'init', function() {
     customControl.setMap(map);
     customControl2.setMap(map);
@@ -147,12 +148,16 @@ function App() {
     });
      // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
-  const getAxios = (max,min,map) =>{
+
+  // 현재 위치에서 찾기
+  const getAxios =async (max,min,map) =>{
     
     
     let marker
+    
     var config = {
       method: 'get',
+      //mylocaltion 위치 안먹음 라이프사이클 확인 요망(중요도 낮음)
       url: 'https://map.naver.com/v5/api/search?caller=pcweb&query=%EB%82%B4%EC%A3%BC%EB%B3%80%EC%9D%8C%EC%8B%9D%EC%A0%90&type=place&searchCoord='+mylocation.lng+';'+mylocation.lat+'&page=1&displayCount=20&boundary='+min.x+';'+min.y+';'+max.x+';'+max.y+'&lang=ko',
       headers: { 
         'Content-Type': 'application/json', 
@@ -160,7 +165,7 @@ function App() {
       }
     };
     
-    axios(config)
+    await axios(config)
     .then(function (response) {
       
       if(markers.length>0){
@@ -170,20 +175,63 @@ function App() {
       }
       
       
-      response.data.result.place.list.map((item) => {
+      response.data.result.place.list.map((item) => { 
+        //마커 생성하기
         marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(item.y, item.x),
           map: map
         })
+        
+        marker.id = item.id
+        //마커 맵에 올리기
         marker.setMap(map)
-        setMakers(markers.push(marker))
-        return ;
+
+        
+        // 마커 다시 그리기 위한 용도
+        setMarkers(markers.push(marker))
+
+        // 음식점 정보창 생성(마커 클릭시)
+        var contentString = [
+          '<div class="iw_inner">',
+          '   <h3>'+item.name+'</h3>',
+          '   <p>'+item.address+'<br />',
+          '       <img src="'+ item.thumUrl +'" width="55" height="55" alt="'+item.name+'" class="thumb" /><br />',
+          '       '+item.tel+' | '+item.category[0]+' &gt; '+item.category[1]+'<br />',
+          '       <a href="'+item.homePage+'" target="_blank">'+item.homePage+'</a>',
+          '   </p>',
+          '</div>'
+        ].join('');
+        var infowindow = new naver.maps.InfoWindow({
+            content: contentString,
+           
+        });
+        
+        //마커 클릭시 정보창 띄워주기
+        naver.maps.Event.addListener(marker, "click", function(e) {
+          //infowindow.setPosition(naver.maps.LatLng(item.y, item.x))
+          getInfoWindow(map,marker ,infowindow)
+          console.log('infowindow >>' ,infowindow)
+          console.log('item >>' ,item)
+        });
+        return;
       })
+
       setAroundStore(response.data.result.place.list)
     })
     .catch(function (error) {
       console.log(error);
     });
+  }
+
+  const getInfoWindow = (map,marker,infowindow ) =>{
+    
+    
+  
+      if (infowindow.getMap()) {
+          infowindow.close();
+      } else {
+          infowindow.open(map, marker,infowindow);
+      }
   }
   
   return (
@@ -210,26 +258,17 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {/* <tr>
-                <td>1</td>
-                <td>★★★★☆</td>
-                <td>우리집</td>
-                <td>경기도 용인시 기흥구 덕영대로 2077번길 20</td>
-                <td>가정식 백반</td>
-                <td>with two columns</td>
-                <td>with two columns</td>
-              </tr> */}
               {aroundStore.length>0 && aroundStore.map((item,index) =>(
-                <tr key={index}>
-                  <td>{item.rank}</td>
-                  <td>점수</td>
-                  <td>{item.name}</td>
-                  <td>{item.address}</td>
-                  <td>{item.category[0]+' >> '+item.category[1]}</td>
-                  <td>{item.y}</td>
-                  <td>{item.x}</td>
-                </tr>
-              ))
+                  <tr key={index}>
+                    <td>{item.rank}</td>
+                    <td>점수</td>
+                    <td>{item.name}</td>
+                    <td>{item.address}</td>
+                    <td>{item.category[0]+' >> '+item.category[1]}</td>
+                    <td>{item.y}</td>
+                    <td>{item.x}</td>
+                  </tr>
+                ))
               }
             </tbody>
           </table>
@@ -272,14 +311,11 @@ function App() {
               optionList={[1,2,3]}
             />
           </div>
-          <div style={{marginTop:50}}>
-            <button>등록</button>
+            <div style={{marginTop:50}}>
+              <button>등록</button>
+            </div>
           </div>
-        </div>
-      </RightShiftModal>
-
-   
-       
+        </RightShiftModal>
       </div>
     </div>
   );
