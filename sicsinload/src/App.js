@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import logo from './asset/mylocationicon18.jpg'
+import miniInfoLogo from './asset/speech-balloon-6754533_640.png'
 import sicsinLoadLogo from './asset/sicsinload.png'
 import Input from './component/js/inputForm/Input';
 import axios from 'axios';
@@ -46,7 +47,7 @@ function App() {
   useEffect(()=>{
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
   // 지도에 표시할 위치의 위도와 경도 설정
-
+  
   const mapOptions = {
   center: location,
   // 중앙에 배치할 위치
@@ -118,6 +119,7 @@ function App() {
     naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function() {
       console.log('marker : ',marker.position.y,marker.position.x)
       map.setCenter(new naver.maps.LatLng(marker.position.y, marker.position.x));
+      map.setZoom(16)
     });
     //현재위치에서 주변 음식점 검색
     naver.maps.Event.addDOMListener(customControl2.getElement(), 'click', function() {
@@ -154,7 +156,6 @@ function App() {
     
     
     let marker
-    
     var config = {
       method: 'get',
       //mylocaltion 위치 안먹음 라이프사이클 확인 요망(중요도 낮음)
@@ -165,8 +166,10 @@ function App() {
       }
     };
     
+    
     await axios(config)
     .then(function (response) {
+      let savedStores = []
       
       if(markers.length>0){
         markers.map((item) =>{
@@ -175,9 +178,34 @@ function App() {
       }
       
       
+      savedStores = JSON.parse(localStorage.getItem('stores'))
+      savedStores = savedStores ? savedStores.concat(response.data.result.place.list) : response.data.result.place.list
+      //최신데이터를 위해 기존데이터 제거를 위한 리버스 후 필터링
+      savedStores.reverse();
+      savedStores = savedStores.filter((item, i) => {
+        return (
+          savedStores.findIndex((item2, j) => {
+            return item.id === item2.id;
+          }) === i
+          );
+        });
+        console.log('savedStores : ',savedStores)
+        localStorage.setItem('stores',JSON.stringify(savedStores))
+      
       response.data.result.place.list.map((item) => { 
         //마커 생성하기
         marker = new naver.maps.Marker({
+          icon : {
+            content: 
+              '<div>'+
+                // '<div style="width:50px;height:20px;border:1px solid black;border-radius: 5px;">'+
+                //   '<span>ad</span>'+
+                // '</div>'+
+              '<img src="'+miniInfoLogo+'"</img>'+
+              '</div>',
+              scaledSize: new naver.maps.Size(100, 136),
+              anchor: naver.maps.Point(60, 80)
+          },
           position: new naver.maps.LatLng(item.y, item.x),
           map: map
         })
@@ -209,7 +237,11 @@ function App() {
         //마커 클릭시 정보창 띄워주기
         naver.maps.Event.addListener(marker, "click", function(e) {
           //infowindow.setPosition(naver.maps.LatLng(item.y, item.x))
-          getInfoWindow(map,marker ,infowindow)
+          if (infowindow.getMap()) {
+            infowindow.close();
+        } else {
+            infowindow.open(map, marker,infowindow);
+        }
           console.log('infowindow >>' ,infowindow)
           console.log('item >>' ,item)
         });
@@ -223,17 +255,7 @@ function App() {
     });
   }
 
-  const getInfoWindow = (map,marker,infowindow ) =>{
-    
-    
-  
-      if (infowindow.getMap()) {
-          infowindow.close();
-      } else {
-          infowindow.open(map, marker,infowindow);
-      }
-  }
-  
+ 
   return (
     <div className="App">
       <div className='Wrapper'>
