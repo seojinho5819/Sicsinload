@@ -5,44 +5,51 @@ import miniInfoLogo from './asset/speech-balloon-6754533_640.png'
 import sicsinLoadLogo from './asset/sicsinload.png'
 import Input from './component/js/inputForm/Input';
 import axios from 'axios';
+import moment from 'moment';
 import Select from './component/js/inputForm/Select';
 import RightShiftModal from './component/js/inputForm/RightShiftModal';
-
+import { Rating } from 'react-simple-star-rating'
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
   const [ aroundStore , setAroundStore ] = useState([])
+  const [ focusingStore , setFocusingStore ] = useState({})
+  const [ focusingMarker , setFocusingMarker ] = useState({})
+  const [ isSidebar , setIsSidebar ] = useState(false)
   const [ markers , setMarkers ] = useState([])
   const { naver } = window;
+  const tabList = ['음식점 정보','리뷰 작성']
+
+  const handleRating = (rate) => {
+    setFocusingStore({...focusingStore,rating:rate})
+    // other logic
+  }
   
 
-
-  // getAxios()
-  // const getAxios = async() =>{
-  //   var config = {
-  //     method: 'get',
-  //     url: '/v1/search/local.json?query=내근처음식점&display=5&start=100',
-  //     headers: { 
-  //       'Content-Type': 'application/json', 
-  //       'X-Naver-Client-Id': 'DJGnZ7vQFrDYjIvc57PY', 
-  //       'X-Naver-Client-Secret': 'FQXmywEPSO'
-  //     }
-  //   };
+  function isEmptyObj(obj)  {
+    if(obj.constructor === Object
+       && Object.keys(obj).length === 0)  {
+      return true;
+    }
     
-  //   axios(config)
-  //   .then(function (response) {
-  //     console.log(response.data.items);
-  //   })
-  //   .catch(function (error) {
-  //     console.log(error);
-  //   });
-    
+    return false;
+  }
 
-  // }
-  //"proxy": "https://openapi.naver.com",
- 
-
-
+  // useEffect(()=>{
+  //   console.log('focusingStore : ',focusingStore)
+  // },[focusingStore])
+  
+  
+  useEffect(()=>{
+    if(!isEmptyObj(focusingMarker)){
+      if(!isSidebar){
+        focusingMarker?.setAnimation(null)
+  
+      }
+    }
+  },[isSidebar])
 
   useEffect(()=>{
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
@@ -69,36 +76,6 @@ function App() {
   let map = naver && new naver.maps.Map('map', mapOptions);
  
 
-
- 
-  // const findNearstore = (lat,lng) => {
-  //   let stores = []
-  //   if(store.length>0){
-  //     stores = store
-  //     stores.setMap(null)
-  //     setStore([])
-  //   }
-  //   let places = new kakao.maps.services.Places();
-  //   let callback = function(result, status) {
-  //     if (status === kakao.maps.services.Status.OK) {
-  //         result.map(res => {
-  //           let marker = new naver.maps.Marker({
-  //             position: new naver.maps.LatLng(res.y, res.x),
-  //             map: map
-  //           })
-  //           stores.push(marker)
-  //           setStore(stores)
-  //         }
-  //         )
-  //     }
-  //   };
-
-  //   places.keywordSearch('내주변 음식점', callback,{ location: new kakao.maps.LatLng(lat, lng),radius:500});
-    
-  // }
-
-  //findNearstore(mylocation.lat, mylocation.lng)
-  
 
 
   // DOM 요소에 지도 삽입 (지도를 삽입할 HTML 요소의 id, 지도의 옵션 객체)
@@ -127,13 +104,7 @@ function App() {
     });
   });
  
-  // 지도에 마커(내위치) 생성
-//   let circle = new naver.maps.Circle({
-//     map: map,
-//     center: mylocation,
-//     radius: 500,
-//     fillOpacity: 0.8
-// });
+
   // 마커(나) 이동
   naver.maps.Event.addListener(map, 'click',  async function(e) {
  
@@ -195,17 +166,6 @@ function App() {
       response.data.result.place.list.map((item) => { 
         //마커 생성하기
         marker = new naver.maps.Marker({
-          icon : {
-            content: 
-              '<div>'+
-                // '<div style="width:50px;height:20px;border:1px solid black;border-radius: 5px;">'+
-                //   '<span>ad</span>'+
-                // '</div>'+
-              '<img src="'+miniInfoLogo+'"</img>'+
-              '</div>',
-              scaledSize: new naver.maps.Size(100, 136),
-              anchor: naver.maps.Point(60, 80)
-          },
           position: new naver.maps.LatLng(item.y, item.x),
           map: map
         })
@@ -234,19 +194,24 @@ function App() {
            
         });
         
-        //마커 클릭시 정보창 띄워주기
+        //마커 클릭시 우측 정보창 띄워주기
         naver.maps.Event.addListener(marker, "click", function(e) {
-          //infowindow.setPosition(naver.maps.LatLng(item.y, item.x))
-          if (infowindow.getMap()) {
-            infowindow.close();
-        } else {
-            infowindow.open(map, marker,infowindow);
-        }
-          console.log('infowindow >>' ,infowindow)
-          console.log('item >>' ,item)
+          let reviews = JSON.parse(localStorage.getItem('reviews'))?.filter(x => x.id == item.id)?JSON.parse(localStorage.getItem('reviews'))?.filter(x => x.id == item.id):[]
+          let ratings = reviews.map(x => x.rating)
+          if(reviews.length>0){
+            item.ratingAverage = ratings.reduce((sum,currValue) => {return sum+currValue},0)/ratings.length
+            item.reviews = reviews.map(x => x.review)
+          }
+          console.log(item)
+          setFocusingMarker(marker)
+          marker.setAnimation( naver.maps.Animation.BOUNCE)
+          console.log(item)
+          setFocusingStore(item)
+          setIsSidebar(true)
         });
         return;
       })
+      
 
       setAroundStore(response.data.result.place.list)
     })
@@ -295,28 +260,45 @@ function App() {
             </tbody>
           </table>
         </div>
-        <RightShiftModal width={320}>
-          <h2>{'음식점 등록하기'}</h2>
+        <RightShiftModal width={320} isSidebar={isSidebar} setIsSidebar={setIsSidebar} focusingStore={focusingStore}>
+          <h2>{'음식점 정보'}</h2>
+          <Tabs
+            
+          >
+    <TabList>
+      {tabList.map((item,index) => <Tab key ={index}>{item}</Tab>)}
+    </TabList>
+    <TabPanel>
          <div style={{paddingRight:50}}>
-          <div style={{marginTop:100}}>
+          <div style={{marginTop:50}}>
             <Input
               type={'text'}
               colLabel={false}
               label={'상호명'}
+              value={focusingStore?focusingStore.name:''}
+              readOnly
             />
           </div>
-          <div style={{marginTop:50}}>
+          <div  style={{marginTop:30,display:'flex',flexDirection:'row',alignItems:'center'}}>
+              <div style={{margin:20}}>별점</div><Rating readonly ratingValue={focusingStore.ratingAverage?focusingStore.ratingAverage:0} /* Available Props */ />
+            </div>
+         
+          <div style={{marginTop:30}}>
             <Input
-              type={'number'}
+              type={'text'}
               colLabel={false}
               label={'x좌표'}
+              value={focusingStore?focusingStore.x:''}
+              readOnly
             />
           </div>
           <div style={{marginTop:50}}>
             <Input
-              type={'number'}
+              type={'text'}
               colLabel={false}
               label={'y좌표'}
+              value={focusingStore?focusingStore.y:''}
+              readOnly
             />
           </div>
           <div style={{marginTop:50}}>
@@ -324,19 +306,63 @@ function App() {
               type={'text'}
               colLabel={false}
               label={'상세주소'}
+              value={focusingStore?focusingStore.address:''}
+              readOnly
             />
           </div>
           <div style={{marginTop:50}}>
-            <Select
+          <Input
+              type={'text'}
               colLabel={false}
               label={'카테고리'}
-              optionList={[1,2,3]}
+              value={focusingStore.category?(focusingStore.category[0]+' >> '+focusingStore.category[1]):''}
+              readOnly
             />
           </div>
-            <div style={{marginTop:50}}>
-              <button>등록</button>
-            </div>
+           
           </div>
+          </TabPanel>
+          <TabPanel>
+            <div  style={{marginTop:50,display:'flex',flexDirection:'row',alignItems:'center'}}>
+              <div style={{margin:20}}>별점</div><Rating onClick={handleRating} ratingValue={focusingStore.rating?focusingStore.rating:0} /* Available Props */ />
+            </div>
+            <div style={{marginTop:50,display:'flex',flexDirection:'row',alignItems:'center'}}>
+            <div style={{margin:20}}>리뷰</div>
+              <textarea 
+                style={{width:200,height:100}}
+                value={focusingStore?.review?focusingStore.review:''}
+                onChange={(e)=>{
+                  setFocusingStore({...focusingStore,review : e.target.value})
+                }}
+              />
+            </div>
+            <div style={{marginTop:50}}>
+              <button
+                type='button'
+                onClick={()=>{
+                  console.log('focusingStore >> ',focusingStore)
+                  console.log('isEmpty? >> ',isEmptyObj(focusingStore))
+                  if(isEmptyObj(focusingStore)){
+                    window.alert('"지도에서 검색"후 리뷰할 음심점을 먼저 선택해 주세요.')
+                  }else{
+                    const reaction = {
+                      id : focusingStore.id,
+                      rating : focusingStore.rating?focusingStore.rating:0,
+                      review : focusingStore.review,
+                      date : moment().format('YYYY-MM-DD')
+                    }
+                    let reviews = JSON.parse(localStorage.getItem('reviews'))?JSON.parse(localStorage.getItem('reviews')):[]
+                    reviews.push(reaction)
+                    localStorage.setItem('reviews', JSON.stringify(reviews))
+                    window.alert('리뷰 작성이 완료 되었습니다!')
+                    setIsSidebar(false)
+                    setFocusingStore({})
+                  }
+                }}
+              >등록</button>
+            </div>
+          </TabPanel>
+        </Tabs>
         </RightShiftModal>
       </div>
     </div>

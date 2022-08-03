@@ -1,10 +1,23 @@
 import React, {useEffect, useRef, useState } from "react";
 import  '../../css/RightShiftModal.css'
 
-const RightShiftModal = ({ width=280, children }) => {
+const RightShiftModal = ({ width=280,isSidebar,setIsSidebar, children }) => {
     const [isOpen, setOpen] = useState(false);
     const [xPosition, setX] = useState(-width);
     const side = useRef();
+
+    useEffect(()=>{
+        //마커 클릭시
+       
+        if(isSidebar){
+            setX(0);
+            setOpen(true);
+            
+        }else{
+            setX(-width);
+            setOpen(false);
+        }
+    },[isSidebar])
     
     // button 클릭 시 토글
     const toggleMenu = () => {
@@ -14,6 +27,7 @@ const RightShiftModal = ({ width=280, children }) => {
       } else {
         setX(-width);
         setOpen(false);
+        setIsSidebar(false)
       }
     };
     
@@ -24,6 +38,7 @@ const RightShiftModal = ({ width=280, children }) => {
       if (isOpen && (!sideArea || !sideCildren)) {
         await setX(-width); 
         await setOpen(false);
+        setIsSidebar(false)
       }
     }
   
