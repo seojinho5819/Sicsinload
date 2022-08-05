@@ -23,13 +23,14 @@ function App() {
   const { naver } = window;
   const tabList = ['음식점 정보','메뉴 보기','리뷰 보기','리뷰 작성']
 
+  //별점 입력 콜백 함수
   const handleRating = (rate) => {
     setFocusingStore({...focusingStore,rating:rate})
     // other logic
   }
   
-
-  function isEmptyObj(obj)  {
+  // 객체 빈값 체크
+  const isEmptyObj = (obj)  => {
     if(obj.constructor === Object
        && Object.keys(obj).length === 0)  {
       return true;
@@ -38,12 +39,7 @@ function App() {
     return false;
   }
 
-  // useEffect(()=>{
-  //   console.log('focusingStore : ',focusingStore)
-  // },[focusingStore])
-
-  
-  
+  // 사이드바 내릴때 에니메이션 끄기
   useEffect(()=>{
     if(!isEmptyObj(focusingMarker)){
       if(!isSidebar){
@@ -55,31 +51,26 @@ function App() {
 
   useEffect(()=>{
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
-  // 지도에 표시할 위치의 위도와 경도 설정
-  
-  const mapOptions = {
-  center: location,
-  // 중앙에 배치할 위치
-  zoom: 16,
-  // 확대 단계
-  };
+    // 지도에 표시할 위치의 위도와 경도 설정
+    const mapOptions = {
+      center: location,
+      zoom: 16,
+    };
 
-  
+  // 내 위치 버튼
   let myLocationBtnHtml = '<button type="button" style="margin-left:5px;"><span>내위치</span></button>',
   customControl = new naver.maps.CustomControl(myLocationBtnHtml, {
     position: naver.maps.Position.TOP_LEFT
   });
-
+  // 현재 지도에서 검색버튼
   let atMyBounceBtnHtml = '<button type="button" style="cursor:pointer ;margin-bottom:5px; background-color: #008CBA;border:0; border-radius:20px"><span>현재 지도에서 검색</span></button>',
   customControl2 = new naver.maps.CustomControl(atMyBounceBtnHtml, {
     position: naver.maps.Position.BOTTOM_CENTER
   });
 
+  // 맵 객체 생성
   let map = naver && new naver.maps.Map('map', mapOptions);
  
-
-
-
   // DOM 요소에 지도 삽입 (지도를 삽입할 HTML 요소의 id, 지도의 옵션 객체)
   let marker = new naver.maps.Marker({
     map,
@@ -109,25 +100,17 @@ function App() {
 
   // 마커(나) 이동
   naver.maps.Event.addListener(map, 'click',  async function(e) {
- 
-
     setMyLocation({lat : e.latlng.y,'lng' : e.latlng.x})
     marker.setPosition(e.coord);
-   
-    
-    // 선택한 마커로 부드럽게 이동합니다.
     map.setZoom(15);
+    // 선택한 마커로 부드럽게 이동합니다.
     map.panTo(e.coord, {duration:300 ,easing:'linear'});
-    
-   
     });
      // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
 
   // 현재 위치에서 찾기
   const getAxios =async (max,min,map) =>{
-    
-    
     let marker
     var config = {
       method: 'get',
@@ -148,13 +131,13 @@ function App() {
           item.setMap(null)  
         })
       }
+      // 맵 범위 구하기
       var bounds = map.getBounds()
       
-      
+      //맵에 표시할 객체,마커 준비
       let savedStores = []
       savedStores = JSON.parse(localStorage.getItem('stores'))
       let allReviews = JSON.parse(localStorage.getItem('reviews'))
-      
       savedStores = savedStores ? savedStores.concat(response.data.result.place.list) : response.data.result.place.list
       //최신데이터를 위해 기존데이터 제거를 위한 리버스 후 필터링
       savedStores.reverse();
@@ -176,7 +159,7 @@ function App() {
             }
           ))
      
-        
+        // 로컬스토리지에 음식점 추가(네이버 검색 api에 rank20이 자주 바뀜 따라서 음식점 검색이 일정하지 않음으로 스토리지에 저장)
         localStorage.setItem('stores',JSON.stringify(savedStores))
         
        
@@ -191,25 +174,9 @@ function App() {
         //마커 맵에 올리기
         marker.setMap(map)
 
-        
-        // 마커 다시 그리기 위한 용도
+        // 마커 다시 그리기 위한 용도(지도 중심 이동후 다시 검색시)
         setMarkers(markers.push(marker))
 
-        // 음식점 정보창 생성(마커 클릭시)
-        var contentString = [
-          '<div class="iw_inner">',
-          '   <h3>'+item.name+'</h3>',
-          '   <p>'+item.address+'<br />',
-          '       <img src="'+ item.thumUrl +'" width="55" height="55" alt="'+item.name+'" class="thumb" /><br />',
-          '       '+item.tel+' | '+item.category[0]+' &gt; '+item.category[1]+'<br />',
-          '       <a href="'+item.homePage+'" target="_blank">'+item.homePage+'</a>',
-          '   </p>',
-          '</div>'
-        ].join('');
-        var infowindow = new naver.maps.InfoWindow({
-            content: contentString,
-           
-        });
         
         //마커 클릭시 우측 정보창 띄워주기
         naver.maps.Event.addListener(marker, "click", function(e) {
