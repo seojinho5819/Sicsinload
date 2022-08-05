@@ -3,7 +3,7 @@ import './App.css';
 import logo from './asset/mylocationicon18.jpg'
 import miniInfoLogo from './asset/speech-balloon-6754533_640.png'
 import sicsinLoadLogo from './asset/sicsinload.png'
-import Input from './component/js/inputForm/Input';
+import Infor from './component/js/inputForm/Infor';
 import axios from 'axios';
 import moment from 'moment';
 import Select from './component/js/inputForm/Select';
@@ -11,6 +11,7 @@ import RightShiftModal from './component/js/inputForm/RightShiftModal';
 import { Rating } from 'react-simple-star-rating'
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
+import Review from './component/js/inputForm/Review';
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
@@ -20,7 +21,7 @@ function App() {
   const [ isSidebar , setIsSidebar ] = useState(false)
   const [ markers , setMarkers ] = useState([])
   const { naver } = window;
-  const tabList = ['음식점 정보','리뷰 작성']
+  const tabList = ['음식점 정보','메뉴 보기','리뷰 보기','리뷰 작성']
 
   const handleRating = (rate) => {
     setFocusingStore({...focusingStore,rating:rate})
@@ -40,6 +41,7 @@ function App() {
   // useEffect(()=>{
   //   console.log('focusingStore : ',focusingStore)
   // },[focusingStore])
+
   
   
   useEffect(()=>{
@@ -94,7 +96,7 @@ function App() {
     customControl2.setMap(map);
     //내위치
     naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function() {
-      console.log('marker : ',marker.position.y,marker.position.x)
+ 
       map.setCenter(new naver.maps.LatLng(marker.position.y, marker.position.x));
       map.setZoom(16)
     });
@@ -108,7 +110,7 @@ function App() {
   // 마커(나) 이동
   naver.maps.Event.addListener(map, 'click',  async function(e) {
  
-    console.log(e.latlng.y,e.latlng.x)
+
     setMyLocation({lat : e.latlng.y,'lng' : e.latlng.x})
     marker.setPosition(e.coord);
    
@@ -117,7 +119,7 @@ function App() {
     map.setZoom(15);
     map.panTo(e.coord, {duration:300 ,easing:'linear'});
     
-    console.log('bounds : ',map.getBounds());
+   
     });
      // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
@@ -140,16 +142,19 @@ function App() {
     
     await axios(config)
     .then(function (response) {
-      let savedStores = []
       
       if(markers.length>0){
         markers.map((item) =>{
           item.setMap(null)  
         })
       }
+      var bounds = map.getBounds()
       
       
+      let savedStores = []
       savedStores = JSON.parse(localStorage.getItem('stores'))
+      let allReviews = JSON.parse(localStorage.getItem('reviews'))
+      
       savedStores = savedStores ? savedStores.concat(response.data.result.place.list) : response.data.result.place.list
       //최신데이터를 위해 기존데이터 제거를 위한 리버스 후 필터링
       savedStores.reverse();
@@ -160,10 +165,22 @@ function App() {
           }) === i
           );
         });
-        console.log('savedStores : ',savedStores)
+        let forMarker = savedStores.filter(item => item.x <= bounds._max.x && item.x >= bounds._min.x 
+          && item.y <= bounds._max.y && item.y >= bounds._min.y)
+          forMarker = forMarker.map(item1 => (
+            {...item1,
+              reviews : allReviews.filter(item2 => item2.id == item1.id),
+              ratingAverage : allReviews.filter(item2 => item2.id == item1.id).length >0 
+              ? allReviews.filter(item2 => item2.id == item1.id).reduce((sum,currValue) =>  sum+currValue.rating,0)/(allReviews.filter(item2 => item2.id == item1.id).length)
+              : 0
+            }
+          ))
+     
+        
         localStorage.setItem('stores',JSON.stringify(savedStores))
-      
-      response.data.result.place.list.map((item) => { 
+        
+       
+        forMarker.map((item) => { 
         //마커 생성하기
         marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(item.y, item.x),
@@ -196,24 +213,29 @@ function App() {
         
         //마커 클릭시 우측 정보창 띄워주기
         naver.maps.Event.addListener(marker, "click", function(e) {
-          let reviews = JSON.parse(localStorage.getItem('reviews'))?.filter(x => x.id == item.id)?JSON.parse(localStorage.getItem('reviews'))?.filter(x => x.id == item.id):[]
-          let ratings = reviews.map(x => x.rating)
-          if(reviews.length>0){
-            item.ratingAverage = ratings.reduce((sum,currValue) => {return sum+currValue},0)/ratings.length
-            item.reviews = reviews.map(x => x.review)
-          }
-          console.log(item)
+
+         
+          let allSavedReviews = JSON.parse(localStorage.getItem('reviews'))
+
+
+          item.reviews = allSavedReviews.filter( review => review.id == item.id)
+          item.ratingAverage = allSavedReviews.filter( review => review.id == item.id).length > 0
+           ? allSavedReviews.filter( review => review.id == item.id).reduce((sum,curr)=>sum+curr.rating,0)/allSavedReviews.filter( review => review.id == item.id).length
+           : 0
+          
+
+     
           setFocusingMarker(marker)
           marker.setAnimation( naver.maps.Animation.BOUNCE)
-          console.log(item)
+          
           setFocusingStore(item)
           setIsSidebar(true)
         });
         return;
       })
       
-
-      setAroundStore(response.data.result.place.list)
+  
+      setAroundStore(forMarker)
     })
     .catch(function (error) {
       console.log(error);
@@ -232,7 +254,7 @@ function App() {
           <table border={'1'} width='100%'>
             <thead>
               <tr>
-                  <th colspan="7">내주변 맛집정보 (20)</th>
+                  <th colspan="7">내주변 맛집정보 ({aroundStore.length+'개'})</th>
               </tr>
               <tr>
                   <td>번호</td>
@@ -246,9 +268,9 @@ function App() {
             </thead>
             <tbody>
               {aroundStore.length>0 && aroundStore.map((item,index) =>(
-                  <tr key={index}>
-                    <td>{item.rank}</td>
-                    <td>점수</td>
+                  <tr key ={item.id}>
+                    <td>{index+1}</td>
+                    <td>{item.reviews.length>0?item.ratingAverage/20:'리뷰없음'}</td>
                     <td>{item.name}</td>
                     <td>{item.address}</td>
                     <td>{item.category[0]+' >> '+item.category[1]}</td>
@@ -260,74 +282,84 @@ function App() {
             </tbody>
           </table>
         </div>
-        <RightShiftModal width={320} isSidebar={isSidebar} setIsSidebar={setIsSidebar} focusingStore={focusingStore}>
+        <RightShiftModal width={440} isSidebar={isSidebar} setIsSidebar={setIsSidebar} focusingStore={focusingStore}>
           <h2>{'음식점 정보'}</h2>
           <Tabs
+            id={'infoTabs'}
             
           >
     <TabList>
       {tabList.map((item,index) => <Tab key ={index}>{item}</Tab>)}
     </TabList>
     <TabPanel>
+        <div className='photoZone'>
+          <div>
+            {isEmptyObj(focusingStore)  
+              ? <div style={{marginTop:50}}>선택된 음심점이 없습니다</div>
+              : <img src={focusingStore?.thumUrl} style={{width:'100%',height:200}}/>
+            }
+          </div>
+        </div>
          <div style={{paddingRight:50}}>
           <div style={{marginTop:50}}>
-            <Input
-              type={'text'}
-              colLabel={false}
+            <Infor
               label={'상호명'}
               value={focusingStore?focusingStore.name:''}
-              readOnly
             />
           </div>
-          <div  style={{marginTop:30,display:'flex',flexDirection:'row',alignItems:'center'}}>
-              <div style={{margin:20}}>별점</div><Rating readonly ratingValue={focusingStore.ratingAverage?focusingStore.ratingAverage:0} /* Available Props */ />
+          <div  style={{marginTop:30,display:'flex',flexDirection:'row'}}>
+              <div style={{display:'flex',width:100,margin:10}}>별점</div>
+              <Rating readonly ratingValue={focusingStore.ratingAverage?focusingStore.ratingAverage:0}  />
             </div>
          
           <div style={{marginTop:30}}>
-            <Input
-              type={'text'}
-              colLabel={false}
+            <Infor
               label={'x좌표'}
               value={focusingStore?focusingStore.x:''}
-              readOnly
             />
           </div>
           <div style={{marginTop:50}}>
-            <Input
-              type={'text'}
-              colLabel={false}
+            <Infor
               label={'y좌표'}
               value={focusingStore?focusingStore.y:''}
-              readOnly
             />
           </div>
           <div style={{marginTop:50}}>
-            <Input
-              type={'text'}
-              colLabel={false}
+            <Infor
               label={'상세주소'}
               value={focusingStore?focusingStore.address:''}
-              readOnly
             />
           </div>
           <div style={{marginTop:50}}>
-          <Input
-              type={'text'}
-              colLabel={false}
+          <Infor
               label={'카테고리'}
               value={focusingStore.category?(focusingStore.category[0]+' >> '+focusingStore.category[1]):''}
-              readOnly
             />
           </div>
            
           </div>
           </TabPanel>
           <TabPanel>
+            <div style={{marginTop:50}}>
+              메뉴   
+            </div>
+           
+          </TabPanel>
+          <TabPanel>
+            <div style={{marginTop:50}}>
+              
+            </div>
+            <Review
+              reviews = {focusingStore.reviews}
+            />
+          </TabPanel>
+          <TabPanel>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
             <div  style={{marginTop:50,display:'flex',flexDirection:'row',alignItems:'center'}}>
-              <div style={{margin:20}}>별점</div><Rating onClick={handleRating} ratingValue={focusingStore.rating?focusingStore.rating:0} /* Available Props */ />
+              <div style={{marginRight:20}}>별점</div><Rating onClick={handleRating} ratingValue={focusingStore.rating?focusingStore.rating:0} /* Available Props */ />
             </div>
             <div style={{marginTop:50,display:'flex',flexDirection:'row',alignItems:'center'}}>
-            <div style={{margin:20}}>리뷰</div>
+            <div style={{marginRight:20}}>리뷰</div>
               <textarea 
                 style={{width:200,height:100}}
                 value={focusingStore?.review?focusingStore.review:''}
@@ -340,9 +372,8 @@ function App() {
               <button
                 type='button'
                 onClick={()=>{
-                  console.log('focusingStore >> ',focusingStore)
-                  console.log('isEmpty? >> ',isEmptyObj(focusingStore))
-                  if(isEmptyObj(focusingStore)){
+              
+                  if(!focusingStore.id){
                     window.alert('"지도에서 검색"후 리뷰할 음심점을 먼저 선택해 주세요.')
                   }else{
                     const reaction = {
@@ -354,12 +385,15 @@ function App() {
                     let reviews = JSON.parse(localStorage.getItem('reviews'))?JSON.parse(localStorage.getItem('reviews')):[]
                     reviews.push(reaction)
                     localStorage.setItem('reviews', JSON.stringify(reviews))
+                    setFocusingStore({...focusingStore,reviews:reviews,ratingAverage:reviews.reduce((sum,curr) => sum+curr,0)/reviews.length})
                     window.alert('리뷰 작성이 완료 되었습니다!')
                     setIsSidebar(false)
+                   
                     setFocusingStore({})
                   }
                 }}
               >등록</button>
+            </div>
             </div>
           </TabPanel>
         </Tabs>

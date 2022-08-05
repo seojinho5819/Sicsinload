@@ -4,10 +4,10 @@ const Input = ({colLabel,label,type,value,readOnly}) => {
     
     return (
         <div style={{display:'flex',flexDirection:colLabel?colLabel:'row'}}>
-            <div style={{width:100,marginRight:10}}>{label}</div>
+            <div style={{width:200,border:'1px solid black'}}>{label}</div>
             <div>
                 <input
-                    style={{width:180,border: 'none', background: 'transparent'}}
+                    style={{width:230,border: 'none', background: 'transparent',border:'1px solid black'}}
                     type={type}
                     label={label}
                     value={value}
