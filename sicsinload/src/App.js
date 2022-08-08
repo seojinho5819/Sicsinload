@@ -3,15 +3,16 @@ import './App.css';
 import logo from './asset/mylocationicon18.jpg'
 import miniInfoLogo from './asset/speech-balloon-6754533_640.png'
 import sicsinLoadLogo from './asset/sicsinload.png'
-import Infor from './component/js/inputForm/Infor';
+import Infor from './component/js/common/Infor';
 import axios from 'axios';
 import moment from 'moment';
-import Select from './component/js/inputForm/Select';
-import RightShiftModal from './component/js/inputForm/RightShiftModal';
+import Select from './component/js/common/Select';
+import RightShiftModal from './component/js/common/RightShiftModal';
 import { Rating } from 'react-simple-star-rating'
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
-import Review from './component/js/inputForm/Review';
+import Review from './component/js/common/Review';
+import Menu from './component/js/menu/Menu';
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
@@ -193,8 +194,11 @@ function App() {
 
      
           setFocusingMarker(marker)
+          console.log('click : ',)
+          console.log('click : ',item)
           marker.setAnimation( naver.maps.Animation.BOUNCE)
-          
+          //map.naver.com/v5/api/sites/summary/36214979?lang=ko
+
           setFocusingStore(item)
           setIsSidebar(true)
         });
@@ -221,7 +225,7 @@ function App() {
           <table border={'1'} width='100%'>
             <thead>
               <tr>
-                  <th colspan="7">내주변 맛집정보 ({aroundStore.length+'개'})</th>
+                  <th colspan="7">내 주변 식당정보 ({aroundStore.length+'개'})</th>
               </tr>
               <tr>
                   <td>번호</td>
@@ -237,7 +241,7 @@ function App() {
               {aroundStore.length>0 && aroundStore.map((item,index) =>(
                   <tr key ={item.id}>
                     <td>{index+1}</td>
-                    <td>{item.reviews.length>0?item.ratingAverage/20:'리뷰없음'}</td>
+                    <td>{item.reviews.length>0?(item.ratingAverage/20).toFixed(1):'리뷰없음'}</td>
                     <td>{item.name}</td>
                     <td>{item.address}</td>
                     <td>{item.category[0]+' >> '+item.category[1]}</td>
@@ -307,10 +311,9 @@ function App() {
           </div>
           </TabPanel>
           <TabPanel>
-            <div style={{marginTop:50}}>
-              메뉴   
-            </div>
-           
+            <Menu
+              menuInfo={focusingStore?.menuInfo?focusingStore?.menuInfo:''}
+            />
           </TabPanel>
           <TabPanel>
             <div style={{marginTop:50}}>
