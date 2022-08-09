@@ -13,6 +13,7 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import Review from './component/js/common/Review';
 import Menu from './component/js/menu/Menu';
+import MarkerClustering from '../src/utils/MarkerClustering'
 
 function App() {
   const [ mylocation , setMyLocation ] = useState({lat : 37.2803486,lng : 127.118456})
@@ -45,10 +46,15 @@ function App() {
     if(!isEmptyObj(focusingMarker)){
       if(!isSidebar){
         focusingMarker?.setAnimation(null)
-  
       }
     }
   },[isSidebar])
+
+  // 사이드바 내릴때 에니메이션 끄기
+  useEffect(()=>{
+    console.log('store >> ',focusingStore)
+  },[focusingStore])
+
 
   useEffect(()=>{
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
@@ -97,6 +103,7 @@ function App() {
       getAxios(map.getBounds()._max,map.getBounds()._min,map)
     });
   });
+
  
 
   // 마커(나) 이동
@@ -164,41 +171,35 @@ function App() {
         localStorage.setItem('stores',JSON.stringify(savedStores))
         
        
-        forMarker.map((item) => { 
+        forMarker.map((item,index) => { 
         //마커 생성하기
+        
         marker = new naver.maps.Marker({
           position: new naver.maps.LatLng(item.y, item.x),
           map: map
         })
         
+        //console.log('marker >>',marker.position)
         marker.id = item.id
         //마커 맵에 올리기
         marker.setMap(map)
-
+        
         // 마커 다시 그리기 위한 용도(지도 중심 이동후 다시 검색시)
         setMarkers(markers.push(marker))
-
         
         //마커 클릭시 우측 정보창 띄워주기
         naver.maps.Event.addListener(marker, "click", function(e) {
-
-         
+          
           let allSavedReviews = JSON.parse(localStorage.getItem('reviews'))
-
-
+          
           item.reviews = allSavedReviews.filter( review => review.id == item.id)
           item.ratingAverage = allSavedReviews.filter( review => review.id == item.id).length > 0
-           ? allSavedReviews.filter( review => review.id == item.id).reduce((sum,curr)=>sum+curr.rating,0)/allSavedReviews.filter( review => review.id == item.id).length
-           : 0
+          ? allSavedReviews.filter( review => review.id == item.id).reduce((sum,curr)=>sum+curr.rating,0)/allSavedReviews.filter( review => review.id == item.id).length
+          : 0
           
-
-     
           setFocusingMarker(marker)
-          console.log('click : ',)
-          console.log('click : ',item)
-          marker.setAnimation( naver.maps.Animation.BOUNCE)
-          //map.naver.com/v5/api/sites/summary/36214979?lang=ko
-
+          marker.setAnimation(1)
+          marker.setPosition(new naver.maps.LatLng(item.y, item.x))
           setFocusingStore(item)
           setIsSidebar(true)
         });
@@ -207,6 +208,19 @@ function App() {
       
   
       setAroundStore(forMarker)
+    //   let markerClustering = new MarkerClustering({
+    //     minClusterSize: 2,
+    //     maxZoom: 8,
+    //     map: map,
+    //     markers: forMarker,
+    //     disableClickZoom: false,
+    //     gridSize: 120,
+    //     //icons: [htmlMarker1, htmlMarker2, htmlMarker3, htmlMarker4, htmlMarker5],
+    //     //indexGenerator: [10, 100, 200, 500, 1000],
+    //     // stylingFunction: function(clusterMarker, count) {
+    //     //     $(clusterMarker.getElement()).find('div:first-child').text(count);
+    //     // }
+    // });
     })
     .catch(function (error) {
       console.log(error);
@@ -257,7 +271,7 @@ function App() {
           <h2>{'음식점 정보'}</h2>
           <Tabs
             id={'infoTabs'}
-            
+            style={{marginRight:25}}
           >
     <TabList>
       {tabList.map((item,index) => <Tab key ={index}>{item}</Tab>)}
@@ -267,7 +281,7 @@ function App() {
           <div>
             {isEmptyObj(focusingStore)  
               ? <div style={{marginTop:50}}>선택된 음심점이 없습니다</div>
-              : <img src={focusingStore?.thumUrl} style={{width:'100%',height:200}}/>
+              : <img src={focusingStore?.thumUrl} style={{width:'100%',height:200}} alt='음식점 이미지가 없습니다'/>
             }
           </div>
         </div>
@@ -355,11 +369,17 @@ function App() {
                     let reviews = JSON.parse(localStorage.getItem('reviews'))?JSON.parse(localStorage.getItem('reviews')):[]
                     reviews.push(reaction)
                     localStorage.setItem('reviews', JSON.stringify(reviews))
-                    setFocusingStore({...focusingStore,reviews:reviews,ratingAverage:reviews.reduce((sum,curr) => sum+curr,0)/reviews.length})
-                    window.alert('리뷰 작성이 완료 되었습니다!')
-                    setIsSidebar(false)
+
+                    //let store = JSON.parse(localStorage.getItem('stores')).filter(item=>focusingStore.id == item.id)
+                    let storeReviews = JSON.parse(localStorage.getItem('reviews')).filter(item=>item.id == focusingStore.id)
+                    let ratingAverage = storeReviews?.length > 0
+                    ? storeReviews.reduce((sum,curr)=>sum+curr.rating,0)/storeReviews.length
+                    : 0
+                    
+                    setFocusingStore({...focusingStore,ratingAverage : ratingAverage, reviews:storeReviews,review:'',rating:0})
                    
-                    setFocusingStore({})
+                    window.alert('리뷰 작성이 완료 되었습니다!')
+                    
                   }
                 }}
               >등록</button>

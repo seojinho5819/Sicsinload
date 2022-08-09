@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { isEmptyObj } from "../../../utils/util"
 
 export const MenuItem = ({item}) =>{
 
@@ -11,28 +12,32 @@ export const MenuItem = ({item}) =>{
 }
 
 const Menu = ({menuInfo}) =>{
-    menuInfo = menuInfo.split(' | ')
-    menuInfo= menuInfo.map((item) => {
-        let complate = '{"name" : ';
-        item = item.replace(/ /,',"price" : ')
-        item = complate.concat(item+'}')
-        item = item.replace(/}/gi,'"}')
-        item = item.replace(/: /gi,': "')
-        item = item.replace(/\)/gi,')"')
-        console.log(item)
-        return JSON.parse(item)
-    })
-    
-    console.log(menuInfo)
+    if(menuInfo != null){
+        menuInfo = menuInfo.split(' | ')
+        menuInfo = menuInfo.map((item) => {
+            let complate = '{"name" : '; //맨앞
+            item = item.replace(/ /,'","price" : ')//value 앞
+            item = complate.concat(item+'}')
+            item = item.replace(/}/gi,'"}') //맨뒤
+            item = item.replace(/: /gi,': "') //key 중간
+        
+            return JSON.parse(item)
+        })
+    }else{
+        menuInfo = []
+    }
+ 
    
     return (
         <div>
-        {menuInfo?.map((item,index) => (
+        {menuInfo[0]?.name.length > 0 ?
+            menuInfo?.map((item,index) => (
             <MenuItem 
                 key={index}
                 item={item}
             />
         ))
+        :<div>등록된 메뉴가 없습니다.</div>
         }
         </div>
         

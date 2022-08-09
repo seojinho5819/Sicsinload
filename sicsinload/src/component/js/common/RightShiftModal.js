@@ -49,7 +49,7 @@ const RightShiftModal = ({ width,isSidebar,setIsSidebar, children }) => {
     //   };
     // })
     return(
-        <div className='container'>
+        <div className='container' style={{}}>
         <div ref={side}  className='sidebar' style={{ width: `${width}px`, height: '100%',  transform: `translatex(${-xPosition}px)`}}>
             <button onClick={() => toggleMenu()}
             className={'button'} >
