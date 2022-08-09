@@ -63,7 +63,11 @@ function App() {
       center: location,
       zoom: 16,
     };
-
+  // 검색창
+  let searchInput = '<input type="text" style="margin-left:5px;"/>',
+  customControl3 = new naver.maps.CustomControl(searchInput, {
+    position: naver.maps.Position.TOP_LEFT
+  });
   // 내 위치 버튼
   let myLocationBtnHtml = '<button type="button" style="margin-left:5px;"><span>내위치</span></button>',
   customControl = new naver.maps.CustomControl(myLocationBtnHtml, {
@@ -92,6 +96,7 @@ function App() {
   naver.maps.Event.once(map, 'init', function() {
     customControl.setMap(map);
     customControl2.setMap(map);
+    customControl3.setMap(map);
     //내위치
     naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function() {
  
@@ -100,6 +105,10 @@ function App() {
     });
     //현재위치에서 주변 음식점 검색
     naver.maps.Event.addDOMListener(customControl2.getElement(), 'click', function() {
+      getAxios(map.getBounds()._max,map.getBounds()._min,map)
+    });
+     //검색 기반 
+     naver.maps.Event.addDOMListener(customControl2.getElement(), 'click', function() {
       getAxios(map.getBounds()._max,map.getBounds()._min,map)
     });
   });
