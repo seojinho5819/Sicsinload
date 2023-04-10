@@ -11,7 +11,8 @@ React를 이용한 Naver map API기반 맛집 리스트
 
 ### ⚙️ 개발 환경
 - `React`
-- `JDK 1.8.0`
+- `NodeJs v14.18.2`
+- `npm v6.14.15`
 - **IDE** : vscode
 - **Framework** : react(^18.2.0)
 - **storage** : local storage
