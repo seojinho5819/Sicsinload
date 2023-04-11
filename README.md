@@ -28,4 +28,4 @@ React를 이용한 Naver map API기반 맛집 리스트
 
 #### 맛집 리스트 내보내기(export excel, web worker)
 
-#### [예정]debounce 검색창
+#### [예정]debounce 자동완성 검색창
