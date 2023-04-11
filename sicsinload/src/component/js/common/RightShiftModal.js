@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState } from "react";
-import  '../../css/RightShiftModal.css'
+import  '../../css/common/RightShiftModal.css'
 
 const RightShiftModal = ({ width,isSidebar,setIsSidebar, children }) => {
     const [isOpen, setOpen] = useState(false);
@@ -17,6 +17,7 @@ const RightShiftModal = ({ width,isSidebar,setIsSidebar, children }) => {
             setX(-width);
             setOpen(false);
         }
+	// eslint-disable-next-line react-hooks/exhaustive-deps    
     },[isSidebar])
     
     // button 클릭 시 토글
@@ -31,27 +32,10 @@ const RightShiftModal = ({ width,isSidebar,setIsSidebar, children }) => {
       }
     };
     
-    // 사이드바 외부 클릭시 닫히는 함수
-    // const handleClose = async e => {
-    //   let sideArea = side.current;
-    //   let sideCildren = side.current.contains(e.target);
-    //   if (isOpen && (!sideArea || !sideCildren)) {
-    //     await setX(-width); 
-    //     await setOpen(false);
-    //     setIsSidebar(false)
-    //   }
-    // }
-  
-    // useEffect(()=> {
-    //   window.addEventListener('click', handleClose);
-    //   return () => {
-    //     window.removeEventListener('click', handleClose);
-    //   };
-    // })
     return(
         <div className='container' style={{}}>
         <div ref={side}  className='sidebar' style={{ width: `${width}px`, height: '100%',  transform: `translatex(${-xPosition}px)`}}>
-            <button onClick={() => toggleMenu()}
+            <button onClick={toggleMenu}
             className={'button'} >
               {isOpen ? 
               <span>{'>>'}</span> : <span className={'openBtn'}>{'<<'}</span>

@@ -1,20 +1,22 @@
-import { useEffect, useState, useCallback } from "react";
+import React,{ useEffect, useState, useCallback } from "react";
 import "./App.css";
 import logo from "./asset/mylocationicon18.jpg";
 import sicsinLoadLogo from "./asset/sicsinload.png";
 import Infor from "./component/js/common/Infor";
 import axios from "axios";
 import moment from "moment";
+import FileSaver from 'file-saver';
 import RightShiftModal from "./component/js/common/RightShiftModal";
 import { Rating } from "react-simple-star-rating";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import Review from "./component/js/common/Review";
 import Menu from "./component/js/menu/Menu";
-import { getItem, isEmptyObj, setItem } from "./utils/util";
+import { getItem, setItem } from "./utils/localstorage";
+import { isEmptyObj } from "./utils/util";
 
-function App() {
-	const { naver } = window; 
+const App = () => {
+  const { naver } = window;
   const [mylocation, setMyLocation] = useState({
     lat: 37.2803486,
     lng: 127.118456,
@@ -27,48 +29,52 @@ function App() {
   const [map, setMap] = useState(null);
   const tabList = ["음식점 정보", "메뉴 보기", "리뷰 보기", "리뷰 작성"];
 
-  //별점 입력 콜백 함수
-  const handleRating = useCallback((rate) => {
-    setFocusingStore({ ...focusingStore, rating: rate });
-    // other logic
-  },[focusingStore])
+  //별점 입력 함수
+  const handleRating = useCallback(
+    (rate) => {
+      setFocusingStore({ ...focusingStore, rating: rate });
+      // other logic
+    },
+    [focusingStore]
+  );
 
   const registHandler = useCallback((focusingStoreArg) => {
-    if (!focusingStoreArg.id) {
-      window.alert('"지도에서 검색"후 리뷰할 음심점을 먼저 선택해 주세요.');
-    } else {
-      const reaction = {
-        id: focusingStoreArg.id,
-        rating: focusingStoreArg.rating ? focusingStoreArg.rating : 0,
-        review: focusingStoreArg.review,
-        date: moment().format("YYYY-MM-DD"),
-      };
-      const reviews = getItem("reviews");
-      reviews.push(reaction);
-      setItem("reviews", reviews);
+      if (!focusingStoreArg.id) {
+        window.alert('"지도에서 검색"후 리뷰할 음심점을 먼저 선택해 주세요.');
+      } else {
+        const reaction = {
+          id: focusingStoreArg.id,
+          rating: focusingStoreArg.rating ? focusingStoreArg.rating : 0,
+          review: focusingStoreArg.review,
+          date: moment().format("YYYY-MM-DD"),
+        };
+        const reviews = getItem("reviews");
+        reviews.push(reaction);
+        setItem("reviews", reviews);
 
-      const storeReviews = reviews.filter(
-        (item) => item.id === focusingStoreArg.id
-      );
-      const ratingAverage =
-        storeReviews?.length > 0
-          ? storeReviews.reduce((sum, curr) => sum + curr.rating, 0) /
-            storeReviews.length
-          : 0;
+        const storeReviews = reviews.filter(
+          (item) => item.id === focusingStoreArg.id
+        );
+        const ratingAverage =
+          storeReviews?.length > 0
+            ? storeReviews.reduce((sum, curr) => sum + curr.rating, 0) /
+              storeReviews.length
+            : 0;
 
-      setFocusingStore({
-        ...focusingStoreArg,
-        ratingAverage: ratingAverage,
-        reviews: storeReviews,
-        review: "",
-        rating: 0,
-      });
-	  getAroundStoreList(map.getBounds(), getItem('stores'), reviews)
-      window.alert("리뷰 작성이 완료 되었습니다!");
-    }
-  },[focusingStore])
+        setFocusingStore({
+          ...focusingStoreArg,
+          ratingAverage: ratingAverage,
+          reviews: storeReviews,
+          review: "",
+          rating: 0,
+        });
+        getAroundStoreList(map.getBounds(), getItem("stores"), reviews);
+        window.alert("리뷰 작성이 완료 되었습니다!");
+      }
+	// eslint-disable-next-line react-hooks/exhaustive-deps    
+    },[focusingStore]);
 
-  const standbyMap = () => {
+  const standbyMap = useCallback(() => {
     const location = naver && new naver.maps.LatLng(37.2803486, 127.118456);
     // 지도에 표시할 위치의 위도와 경도 설정
     const mapOptions = {
@@ -76,18 +82,18 @@ function App() {
       zoom: 16,
     };
     // 검색창
-    let searchInput = '<input type="text" style="margin-left:5px;"/>',
+    const searchInput = '<input type="text" style="margin-left:5px;"/>',
       customControl3 = new naver.maps.CustomControl(searchInput, {
         position: naver.maps.Position.TOP_LEFT,
       });
     // 내 위치 버튼
-    let myLocationBtnHtml =
+    const myLocationBtnHtml =
         '<button type="button" style="margin-left:5px;"><span>내위치</span></button>',
       customControl = new naver.maps.CustomControl(myLocationBtnHtml, {
         position: naver.maps.Position.TOP_LEFT,
       });
     // 현재 지도에서 검색버튼
-    let atMyBounceBtnHtml =
+    const atMyBounceBtnHtml =
         '<button type="button" style="cursor:pointer ;margin-bottom:5px; background-color: #008CBA;border:0; border-radius:20px"><span>현재 지도에서 검색</span></button>',
       customControl2 = new naver.maps.CustomControl(atMyBounceBtnHtml, {
         position: naver.maps.Position.BOTTOM_CENTER,
@@ -108,7 +114,7 @@ function App() {
     });
 
     naver.maps.Event.once(map, "init", () => {
-	setMap(map)
+      setMap(map);
       customControl.setMap(map);
       customControl2.setMap(map);
       customControl3.setMap(map);
@@ -133,7 +139,7 @@ function App() {
       );
       //검색 기반
       naver.maps.Event.addDOMListener(
-        customControl2.getElement(),
+        customControl3.getElement(),
         "click",
         () => {
           getAxios(mylocation, map.getBounds()._max, map.getBounds()._min, map);
@@ -149,7 +155,8 @@ function App() {
       // 선택한 마커로 부드럽게 이동합니다.
       map.panTo(e.coord, { duration: 300, easing: "linear" });
     });
-  };
+	// eslint-disable-next-line react-hooks/exhaustive-deps    
+  },[mylocation])
 
   const getAroundStoreList = useCallback((bounds, savedStores, allReviews) => {
     const aroundStoreList = savedStores
@@ -174,9 +181,9 @@ function App() {
 
     setAroundStore(aroundStoreList);
     return aroundStoreList;
-  },[])
+  }, []);
 
-  // 현재 위치에서 찾기
+  // 현재 map 중심 기반으로 주변 음식점 찾기
   const getAxios = async (mylocationData, max, min, map) => {
     let marker;
     const config = {
@@ -213,7 +220,11 @@ function App() {
         // 로컬스토리지에 음식점 추가(네이버 검색 api에 rank20이 자주 바뀜 따라서 음식점 검색이 일정하지 않음으로 스토리지에 저장)
         setItem("stores", savedStores);
 
-        const aroundStoreList = getAroundStoreList(bounds, [...savedStores], [...allReviews]);
+        const aroundStoreList = getAroundStoreList(
+          bounds,
+          [...savedStores],
+          [...allReviews]
+        );
 
         aroundStoreList.forEach((item) => {
           //마커 생성하기
@@ -258,6 +269,29 @@ function App() {
       });
   };
 
+  const excelDownLoadHandler = (data) => {
+	const cloneData = data.slice();
+	const worker = new Worker(new URL('./utils/excel.worker.js', import.meta.url));
+	worker.postMessage(
+		JSON.stringify({ action: 'excelDownload', excelDatas: cloneData})
+	);
+	worker.onmessage = (m) => {
+		if(m.data.action === 'progressBar') {
+			// 프로그래스 바 적용시키기
+		}
+		if(m.data.action === 'excelComplete') {
+			if(m.data.data.result === true) {											
+				FileSaver.saveAs(m.data.data.data, `내주변 맛집목록.zip`);
+				alert('엑셀 다운로드가 완료 되었습니다.');
+			} else {
+				alert('엑셀 데이터 생성에 실패 하였습니다.');
+			}
+			worker.terminate();
+		}
+	};	
+
+  }
+
   // 사이드바 내릴때 에니메이션 끄기
   useEffect(() => {
     if (!isEmptyObj(focusingMarker)) {
@@ -265,7 +299,7 @@ function App() {
         focusingMarker?.setAnimation(null);
       }
     }
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSidebar]);
 
   useEffect(() => {
@@ -283,8 +317,12 @@ function App() {
           <table border={"1"} width="100%">
             <thead>
               <tr>
-                <th colSpan="7">
-                  내 주변 식당정보 ({aroundStore.length + "개"})
+                <th colSpan="7" style={{position: 'relative' }}>
+					내 주변 식당정보 ({aroundStore.length + "개"})
+					<button 
+						style={{position: 'absolute', right: 0}}
+						onClick={()=> excelDownLoadHandler(aroundStore)}>
+					{'엑셀 다운로드'}</button>
                 </th>
               </tr>
               <tr>
@@ -407,7 +445,9 @@ function App() {
             </TabPanel>
             <TabPanel>
               <Menu
-                menuInfo={focusingStore?.menuInfo ? focusingStore?.menuInfo : ""}
+                menuInfo={
+                  focusingStore?.menuInfo ? focusingStore?.menuInfo : ""
+                }
               />
             </TabPanel>
             <TabPanel>
@@ -461,9 +501,7 @@ function App() {
                 <div style={{ marginTop: 50 }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      registHandler(focusingStore);
-                    }}
+                    onClick={() => registHandler(focusingStore)}
                   >
                     등록
                   </button>

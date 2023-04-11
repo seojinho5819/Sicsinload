@@ -1,5 +1,4 @@
-import { useEffect } from "react"
-import { Rating } from 'react-simple-star-rating'
+import React from "react"
 
 const Review = (props) =>{
 
@@ -7,8 +6,8 @@ const Review = (props) =>{
         <>
         {props.reviews
             ? props.reviews.length > 0
-                ? props.reviews.reverse().map(item => (
-                    <div>
+                ? props.reviews.reverse().map((item,index) => (
+                    <div key={`d-${index}`}>
                         <hr/>
                             <div>
                                 <div>{item.review}</div>

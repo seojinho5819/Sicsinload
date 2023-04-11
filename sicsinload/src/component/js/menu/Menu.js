@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import React, { useEffect } from "react"
 import { isEmptyObj } from "../../../utils/util"
 
 export const MenuItem = ({item}) =>{
