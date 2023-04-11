@@ -82,7 +82,7 @@ const App = () => {
       zoom: 16,
     };
     // 검색창
-    const searchInput = '<input type="text" style="margin-left:5px;"/>',
+    const searchInput = '<input type="text" placeholder="Debounce 자동완성 구현 예정" style="margin-left:5px;"/>',
       customControl3 = new naver.maps.CustomControl(searchInput, {
         position: naver.maps.Position.TOP_LEFT,
       });
