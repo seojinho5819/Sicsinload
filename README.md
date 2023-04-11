@@ -22,11 +22,10 @@ React를 이용한 Naver map API기반 맛집 리스트
 - **Map store Datas** : Naver Map
 
 ## 📌 주요 기능
-#### 맛집 검색 
+#### 주변 맛집 검색 
 
-#### 맛집 등록 
+#### 맛집 리뷰(별점, 글)
 
-#### [예정]리스트 내보내기(excel, web worker)
+#### 맛집 리스트 내보내기(export excel, web worker)
 
-
-
+#### [예정]debounce 검색창
