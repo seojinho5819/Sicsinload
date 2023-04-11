@@ -17,6 +17,8 @@ React를 이용한 Naver map API기반 맛집 리스트
 - **IDE** : vscode
 - **Framework** : react(^18.2.0)
 - **storage** : local storage
+- **Map** : Naver Cloud API
+- **Map store Datas** : Naver Map
 
 ## 📌 주요 기능
 #### 맛집 검색 - <a href="https://github.com/chaehyuenwoo/SpringBoot-Project-MEGABOX/wiki/%EC%A3%BC%EC%9A%94-%EA%B8%B0%EB%8A%A5-%EC%86%8C%EA%B0%9C(Login)" >상세보기 - WIKI 이동</a>
