@@ -10,6 +10,14 @@ globalThis.onmessage = async function(e) {
     }        
 }
 
+// 네이버 맵 API 요청 URL 생성 함수
+const createNaverMapImageUrl = (center) => {
+    const CLIENT_ID = 't00q2a8p8k'; // 본인의 클라이언트 ID로 변경
+    const url = `https://naveropenapi.apigw.ntruss.com/map-static/v2/raster-cors?w=700&h=500&center=${center}&level=13&clientId=${CLIENT_ID}`;
+    return url;
+  }
+  
+
 const headerStyle = (colorCoded) => {
     return {
         font: {
@@ -126,7 +134,7 @@ const excelDownload = async (datas) => {
  
     ws['!cols'] = wscols;
     ws['!rows'] = wsrows;
-
+    // 워크시트를 워크북에 부착
     xlsx.utils.book_append_sheet(wb, ws, `내주변 식당 정보`);
     const file = xlsx.write(wb, { bookType: 'xlsx', type: 'binary', compression: true });
     zip.file(`내주변 식당 정보.xlsx`, file, { binary: true });
