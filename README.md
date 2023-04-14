@@ -29,12 +29,21 @@ React를 이용한 Naver Map API기반 맛집 리스트
 
 ## 📌 주요 기능
 #### 주변 맛집 검색 
+![image](https://user-images.githubusercontent.com/70255383/231934894-3e507128-e578-47f3-8036-28e161aa37f9.png)
+
 
 #### 맛집 리뷰(별점, 글)
-![image](https://user-images.githubusercontent.com/70255383/231934630-cb0079ac-ae91-46b2-b1a2-419288fe1f7e.png)
+![image](https://user-images.githubusercontent.com/70255383/231935009-019d384c-5791-454c-914d-3694f284a284.png)
+![image](https://user-images.githubusercontent.com/70255383/231935093-8dd164c8-4113-425d-9321-83ed1837792a.png)
 
 
 #### 맛집 리스트 내보내기(export excel, web worker)
-#### [예정] 맵 스냅샷 추가하여 옵셥 다각화 후 상세 리스트 내보내기
+![image](https://user-images.githubusercontent.com/70255383/231934745-2bf9728f-6a37-4d5a-9628-7ccbbcd2bc33.png)
+
+#### [예정1] 맵 스냅샷 추가하여 옵셥 다각화 후 상세 리스트 내보내기(엑셀 내보내기 기능 고도화)
+
+#### [예정]디자인 패턴 적용 해보기(Container/Presentation Pattern + Actomic Pattern)
 
 #### [예정]debounce 자동완성 검색창
+
+#### [예정]애니메이션 신경쓰기
