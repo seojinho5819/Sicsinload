@@ -28,7 +28,7 @@ React를 이용한 Naver Map API기반 맛집 리스트
 - **Map store Datas** : Naver Map
 
 ## 📌 주요 기능
-#### 주변 맛집 검색 
+#### 주변 맛집 검색
 ![image](https://user-images.githubusercontent.com/70255383/231934894-3e507128-e578-47f3-8036-28e161aa37f9.png)
 
 
