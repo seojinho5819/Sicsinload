@@ -31,6 +31,8 @@ React를 이용한 Naver Map API기반 맛집 리스트
 #### 주변 맛집 검색 
 
 #### 맛집 리뷰(별점, 글)
+![image](https://user-images.githubusercontent.com/70255383/231934630-cb0079ac-ae91-46b2-b1a2-419288fe1f7e.png)
+
 
 #### 맛집 리스트 내보내기(export excel, web worker)
 #### [예정] 맵 스냅샷 추가하여 옵셥 다각화 후 상세 리스트 내보내기
