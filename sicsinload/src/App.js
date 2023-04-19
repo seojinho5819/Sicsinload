@@ -1,19 +1,34 @@
 import React,{ useEffect, useState, useCallback } from "react";
-import "./App.css";
-import logo from "./asset/mylocationicon18.jpg";
-import sicsinLoadLogo from "./asset/sicsinload.png";
-import Infor from "./component/js/common/Infor";
+import { Rating } from "react-simple-star-rating";
+import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
+
 import axios from "axios";
 import moment from "moment";
 import FileSaver from 'file-saver';
-import RightShiftModal from "./component/js/common/RightShiftModal";
-import { Rating } from "react-simple-star-rating";
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
+
+import { getItem, setItem, addItem } from "./utils/localstorage";
+import { isEmptyObj } from "./utils/util";
+
+import "./App.css";
 import "react-tabs/style/react-tabs.css";
+import logo from "./asset/mylocationicon18.jpg";
+import sicsinLoadLogo from "./asset/sicsinload.png";
+
+import Infor from "./component/js/common/Infor";
+import RightShiftModal from "./component/js/common/RightShiftModal";
 import Review from "./component/js/common/Review";
 import Menu from "./component/js/menu/Menu";
-import { getItem, setItem } from "./utils/localstorage";
-import { isEmptyObj } from "./utils/util";
+
+/**
+ * @typedef {{
+ *  id: string,
+ *  rating: number,
+ *  review: string,
+ *  date: string,
+ * }} Review 
+ */
+const tabList = ["음식점 정보", "메뉴 보기", "리뷰 보기", "리뷰 작성"];
+
 
 const App = () => {
   const { naver } = window;
@@ -21,13 +36,13 @@ const App = () => {
     lat: 37.2803486,
     lng: 127.118456,
   });
-  const [aroundStore, setAroundStore] = useState([]);
+  const { aroundStore, addAroundStore } = useAroundStore()
   const [focusingStore, setFocusingStore] = useState({});
   const [focusingMarker, setFocusingMarker] = useState({});
   const [isSidebar, setIsSidebar] = useState(false);
   const [markers, setMarkers] = useState([]);
   const [map, setMap] = useState(null);
-  const tabList = ["음식점 정보", "메뉴 보기", "리뷰 보기", "리뷰 작성"];
+  
 
   //별점 입력 함수
   const handleRating = useCallback(
@@ -38,39 +53,52 @@ const App = () => {
     [focusingStore]
   );
 
-  const registHandler = useCallback((focusingStoreArg) => {
+  const registerHandler = useCallback((focusingStoreArg) => {
       if (!focusingStoreArg.id) {
         window.alert('"지도에서 검색"후 리뷰할 음심점을 먼저 선택해 주세요.');
-      } else {
-        const reaction = {
-          id: focusingStoreArg.id,
-          rating: focusingStoreArg.rating ? focusingStoreArg.rating : 0,
-          review: focusingStoreArg.review,
-          date: moment().format("YYYY-MM-DD"),
-        };
-        const reviews = getItem("reviews");
-        reviews.push(reaction);
-        setItem("reviews", reviews);
-
-        const storeReviews = reviews.filter(
-          (item) => item.id === focusingStoreArg.id
-        );
-        const ratingAverage =
-          storeReviews?.length > 0
-            ? storeReviews.reduce((sum, curr) => sum + curr.rating, 0) /
-              storeReviews.length
-            : 0;
-
-        setFocusingStore({
-          ...focusingStoreArg,
-          ratingAverage: ratingAverage,
-          reviews: storeReviews,
-          review: "",
-          rating: 0,
-        });
-        getAroundStoreList(map.getBounds(), getItem("stores"), reviews);
-        window.alert("리뷰 작성이 완료 되었습니다!");
+        return; 
       }
+
+      // 액션 계산 데이터 코드의 행동을 3개로 분류할 수있다.
+      // 1. 액션 행동이 실제 데이터에 변동을 일으키는 함수 array.push(3);
+      // 2. 계산 언제든 호출되도 항상 똑같은 값을 반환하는 함수  1 + 3
+      // 3. 데이터 데이터 'hello'
+
+      /**
+       * @type {Review[]}
+       */
+      const reviews = getItem("reviews"); // 1. 클론이 된 리뷰 배열 인지..
+      reviews.add({ //변수를 인라인 하기 /
+        id: focusingStoreArg.id,
+        rating: focusingStoreArg.rating ? focusingStoreArg.rating : 0,
+        review: focusingStoreArg.review,
+        date: moment().format("YYYY-MM-DD"),
+      });
+
+      setItem("reviews", reviews); // 2. 클론이 안된거라면 이게 의미가있나?...
+      //addItem() -> reviews Set(), 아이템을 추가하는 메서드(함수)를 인터페이스로 제공하기
+
+      const storeReviews = reviews.filter( // storedReviews 저장된 리뷰들 이니까.
+        (item) => item.id === focusingStoreArg.id
+      );
+
+      const ratingAverage =
+        storeReviews?.length > 0
+          ? storeReviews.reduce((sum, curr) => sum + curr.rating, 0) /
+            storeReviews.length
+          : 0; // getRating Average
+
+      setFocusingStore({
+        ...focusingStoreArg,
+        ratingAverage: ratingAverage,
+        reviews: storeReviews,
+        review: "",
+        rating: 0,
+      });
+
+      getAroundStoreList(map.getBounds(), getItem("stores"), reviews);
+      window.alert("리뷰 작성이 완료 되었습니다!");
+      
 	// eslint-disable-next-line react-hooks/exhaustive-deps    
     },[focusingStore]);
 
@@ -158,15 +186,18 @@ const App = () => {
 	// eslint-disable-next-line react-hooks/exhaustive-deps    
   },[mylocation])
 
+  /**
+   * 아 이함수는
+   * 1. setAroundStore를 하는구나..
+   * 근데.. 한편으론 또 뭘하냐면
+   * 
+   * 2. aroundStoreList를 만들어서 리턴 해 주는구나..
+   * getAroundStoreList() 겟만핟
+   */
   const getAroundStoreList = useCallback((bounds, savedStores, allReviews) => {
+
     const aroundStoreList = savedStores
-      .filter(
-        (item) =>
-          item.x <= bounds._max.x &&
-          item.x >= bounds._min.x &&
-          item.y <= bounds._max.y &&
-          item.y >= bounds._min.y
-      )
+      .filter((item) => isInScreenBoundary(item, bounds))
       .map((item1) => ({
         ...item1,
         reviews: allReviews.filter((item2) => item2.id === item1.id),
@@ -179,13 +210,20 @@ const App = () => {
             : 0,
       }));
 
+      function isInScreenBoundary (item, bounds) {
+        return item.x <= bounds._max.x &&
+        item.x >= bounds._min.x &&
+        item.y <= bounds._max.y &&
+        item.y >= bounds._min.y
+      }
+
     setAroundStore(aroundStoreList);
-    return aroundStoreList;
+    // return aroundStoreList;
   }, []);
 
   // 현재 map 중심 기반으로 주변 음식점 찾기
   const getAxios = async (mylocationData, max, min, map) => {
-    let marker;
+    // let marker;
     const config = {
       method: "get",
       //mylocation 위치 안먹음 라이프사이클 확인 요망(중요도 낮음)
@@ -199,70 +237,121 @@ const App = () => {
     await axios(config)
       .then((response) => {
         const responseList = [...response.data.result.place.list];
-        if (markers.length > 0) {
-          markers.forEach((item) => {
-            item.setMap(null);
-          });
-        }
+        
+        markers?.forEach((item) => {
+          item.setMap(null);
+        });
+
+        
         // 맵 범위 구하기
         const bounds = map.getBounds();
 
-        //맵에 표시할 객체,마커 준비
-        let savedStores = getItem("stores");
         let allReviews = getItem("reviews");
-
-        savedStores = savedStores.concat(responseList);
+        //맵에 표시할 객체,마커 준비
+        const savedStores = [...getItem("stores"), ...responseList]
+          .reverse()
+          .filter((item, i) => savedStores.findIndex((item2) => item.id === item2.id) === i);
+          
         //최신데이터를 위해 기존데이터 제거를 위한 리버스 후 필터링
-        savedStores.reverse();
-        savedStores = savedStores.filter((item, i) => {
-          return savedStores.findIndex((item2) => item.id === item2.id) === i;
-        });
+        // savedStores.reverse();
+        // savedStores = savedStores.filter((item, i) => {
+        //   return savedStores.findIndex((item2) => item.id === item2.id) === i;
+        // });
         // 로컬스토리지에 음식점 추가(네이버 검색 api에 rank20이 자주 바뀜 따라서 음식점 검색이 일정하지 않음으로 스토리지에 저장)
         setItem("stores", savedStores);
 
-        const aroundStoreList = getAroundStoreList(
-          bounds,
+        const aroundStoreList =  addAroundStore(bounds,
           [...savedStores],
-          [...allReviews]
-        );
+          [...allReviews])
+        // getAroundStoreList(
+        //   bounds,
+        //   [...savedStores],
+        //   [...allReviews]
+        // );
 
-        aroundStoreList.forEach((item) => {
-          //마커 생성하기
-          marker = new naver.maps.Marker({
-            position: new naver.maps.LatLng(item.y, item.x),
-            map: map,
-          });
-          marker.id = item.id;
-          //마커 맵에 올리기
-          marker.setMap(map);
-          // 마커 다시 그리기 위한 용도(지도 중심 이동후 다시 검색시)
-          setMarkers([...markers].push(marker));
+        aroundStoreList // 지연 평가 같은걸 안하고있으니까. 이정도 반복문을 걱정하지말자... 이걸로 컴퓨터버벅되면 그사람컴퓨터잘못임
+          .map((item) => {
+            //marker 를 생성하는 반복문 작업 1
+            const marker = new naver.maps.Marker({
+              position: new naver.maps.LatLng(item.y, item.x),
+              map: map,
+            });
+            marker.id = item.id;
+            return [marker, item];
+          })
+          .map(([marker, item]) => {
+            //marker 에 map을 set 하는 반복문 작업 2
+            marker.setMap(map);
+            return [marker, item]
+          })
+          .forEach(([marker, item]) => {
+            // naver.map 에다가 이벤트 다는 반복문 작업 3
+            naver.maps.Event.addListener(marker, "click", function (e) {
+              let allSavedReviews = getItem("reviews");
+  
+              item.reviews = allSavedReviews.filter(
+                (review) => review.id === item.id
+              );
+              item.ratingAverage =
+                allSavedReviews.filter((review) => review.id === item.id).length >
+                0
+                  ? allSavedReviews
+                      .filter((review) => review.id === item.id)
+                      .reduce((sum, curr) => sum + curr.rating, 0) /
+                    allSavedReviews.filter((review) => review.id === item.id)
+                      .length
+                  : 0;
+  
+              marker.setAnimation(1);
+              marker.setPosition(new naver.maps.LatLng(item.y, item.x));
+              setFocusingStore(item);
+              setFocusingMarker(marker);
+              setIsSidebar(true);
+            });
+          })
+          
+          
+          
 
-          //마커 클릭시 우측 정보창 띄워주기
-          naver.maps.Event.addListener(marker, "click", function (e) {
-            let allSavedReviews = getItem("reviews");
 
-            item.reviews = allSavedReviews.filter(
-              (review) => review.id === item.id
-            );
-            item.ratingAverage =
-              allSavedReviews.filter((review) => review.id === item.id).length >
-              0
-                ? allSavedReviews
-                    .filter((review) => review.id === item.id)
-                    .reduce((sum, curr) => sum + curr.rating, 0) /
-                  allSavedReviews.filter((review) => review.id === item.id)
-                    .length
-                : 0;
 
-            setFocusingMarker(marker);
-            marker.setAnimation(1);
-            marker.setPosition(new naver.maps.LatLng(item.y, item.x));
-            setFocusingStore(item);
-            setIsSidebar(true);
-          });
-          return;
-        });
+        // aroundStoreList.forEach((item) => { // 반복문 쪼개기
+        //   //마커 생성하기
+        //   marker = new naver.maps.Marker({
+        //     position: new naver.maps.LatLng(item.y, item.x),
+        //     map: map,
+        //   });
+        //   marker.id = item.id;
+        //   //마커 맵에 올리기
+        //   marker.setMap(map);
+        //   // 마커 다시 그리기 위한 용도(지도 중심 이동후 다시 검색시)
+        //   setMarkers([...markers].push(marker));
+
+        //   //마커 클릭시 우측 정보창 띄워주기
+        //   naver.maps.Event.addListener(marker, "click", function (e) {
+        //     let allSavedReviews = getItem("reviews");
+
+        //     item.reviews = allSavedReviews.filter(
+        //       (review) => review.id === item.id
+        //     );
+        //     item.ratingAverage =
+        //       allSavedReviews.filter((review) => review.id === item.id).length >
+        //       0
+        //         ? allSavedReviews
+        //             .filter((review) => review.id === item.id)
+        //             .reduce((sum, curr) => sum + curr.rating, 0) /
+        //           allSavedReviews.filter((review) => review.id === item.id)
+        //             .length
+        //         : 0;
+
+        //     setFocusingMarker(marker);
+        //     marker.setAnimation(1);
+        //     marker.setPosition(new naver.maps.LatLng(item.y, item.x));
+        //     setFocusingStore(item);
+        //     setIsSidebar(true);
+        //   });
+        //   return;
+        // });
       })
       .catch(function (error) {
         console.log(error);
@@ -270,25 +359,25 @@ const App = () => {
   };
 
   const excelDownLoadHandler = (data) => {
-	const cloneData = data.slice();
-	const worker = new Worker(new URL('./utils/excel.worker.js', import.meta.url));
-	worker.postMessage(
-		JSON.stringify({ action: 'excelDownload', excelDatas: cloneData})
-	);
-	worker.onmessage = (m) => {
-		if(m.data.action === 'progressBar') {
-			// 프로그래스 바 적용시키기
-		}
-		if(m.data.action === 'excelComplete') {
-			if(m.data.data.result === true) {											
-				FileSaver.saveAs(m.data.data.data, `내주변 맛집목록.zip`);
-				alert('엑셀 다운로드가 완료 되었습니다.');
-			} else {
-				alert('엑셀 데이터 생성에 실패 하였습니다.');
-			}
-			worker.terminate();
-		}
-	};	
+    const cloneData = data.slice();
+    const worker = new Worker(new URL('./utils/excel.worker.js', import.meta.url));
+    worker.postMessage(
+      JSON.stringify({ action: 'excelDownload', excelDatas: cloneData})
+    );
+    worker.onmessage = (m) => {
+      if(m.data.action === 'progressBar') {
+        // 프로그래스 바 적용시키기
+      }
+      if(m.data.action === 'excelComplete') {
+        if(m.data.data.result === true) {											
+          FileSaver.saveAs(m.data.data.data, `내주변 맛집목록.zip`);
+          alert('엑셀 다운로드가 완료 되었습니다.');
+        } else {
+          alert('엑셀 데이터 생성에 실패 하였습니다.');
+        }
+        worker.terminate();
+      }
+    };	
 
   }
 
@@ -501,7 +590,7 @@ const App = () => {
                 <div style={{ marginTop: 50 }}>
                   <button
                     type="button"
-                    onClick={() => registHandler(focusingStore)}
+                    onClick={() => registerHandler(focusingStore)}
                   >
                     등록
                   </button>
@@ -513,6 +602,37 @@ const App = () => {
       </div>
     </div>
   );
+}
+
+const useAroundStore = () => {
+  const [aroundStore, setAroundStore] = useState([]);
+
+    const addAroundStore = (bounds, savedStores, allReviews) => {
+      const aroundStoreList = savedStores
+      .filter((item) => isInScreenBoundary(item, bounds))
+      .map((item1) => ({
+        ...item1,
+        reviews: allReviews.filter((item2) => item2.id === item1.id),
+        ratingAverage:
+          allReviews.filter((item2) => item2.id === item1.id).length > 0
+            ? allReviews
+                .filter((item2) => item2.id === item1.id)
+                .reduce((sum, currValue) => sum + currValue.rating, 0) /
+              allReviews.filter((item2) => item2.id === item1.id).length
+            : 0,
+      }));
+
+      function isInScreenBoundary (item, bounds) {
+        return item.x <= bounds._max.x &&
+        item.x >= bounds._min.x &&
+        item.y <= bounds._max.y &&
+        item.y >= bounds._min.y
+      }
+
+      setAroundStore(aroundStoreList);
+    }
+
+    return { aroundStore, addAroundStore }
 }
 
 export default App;
